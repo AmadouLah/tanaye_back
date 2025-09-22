@@ -31,3 +31,46 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### SÉCURITÉ - FICHIERS SENSIBLES ###
+# Variables d'environnement
+.env
+.env.local
+.env.production
+.env.staging
+.env.development
+
+# Fichiers de configuration sensibles
+application-local.properties
+application-secret.properties
+config/secrets.properties
+
+# Guides et documentation sensibles
+*SECRETS*.md
+*SECRET*.md
+*SECURITY*.md
+*PROTECTION*.md
+
+# Clés et certificats
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+*.keystore
+
+# Logs sensibles
+logs/
+*.log
+
+# Fichiers de sauvegarde avec données sensibles
+*.backup
+*.bak
+
+# Fichiers temporaires avec données sensibles
+temp/
+tmp/
+
+# Scripts de démarrage avec secrets
+start-with-secrets.bat
+start-with-secrets.sh
