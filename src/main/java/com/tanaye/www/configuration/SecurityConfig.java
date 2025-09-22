@@ -1,6 +1,7 @@
 package com.tanaye.www.configuration;
 
 import com.tanaye.www.security.JwtAuthenticationFilter;
+import com.tanaye.www.service.UserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,7 +14,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import com.tanaye.www.service.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -33,62 +33,97 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
 
+    // ===== CONSTANTES DE CONFIGURATION =====
+
+    // Endpoints publics
+    private static final String[] PUBLIC_ENDPOINTS = {
+            "/api/auth/**"
+    };
+
+    // Documentation et monitoring
+    private static final String[] DOCUMENTATION_ENDPOINTS = {
+            "/actuator/**",
+            "/swagger-ui/**", "/swagger-ui.html", "/swagger-ui/index.html",
+            "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**"
+    };
+
+    // WebSocket
+    private static final String[] WEBSOCKET_ENDPOINTS = {
+            "/ws/**"
+    };
+
+    // Données de référence publiques
+    private static final String[] REFERENCE_DATA_ENDPOINTS = {
+            "/api/pays/**",
+            "/api/regions/**",
+            "/api/villes/**"
+    };
+
+    // Endpoints authentifiés
+    private static final String[] AUTHENTICATED_ENDPOINTS = {
+            "/api/utilisateurs/**",
+            "/api/voyages/**",
+            "/api/colis/**",
+            "/api/avis/**",
+            "/api/messages/**",
+            "/api/localisations/**",
+            "/api/notifications/**",
+            "/api/paiements/**",
+            "/api/recus/**",
+            "/api/reclamations/**",
+            "/api/incidents/**",
+            "/api/historiques/**"
+    };
+
+    // CORS - Origines autorisées
+    private static final String[] ALLOWED_ORIGINS = {
+            "https://tanaye.vercel.app",
+            "http://localhost:3000",
+            "http://localhost:4200",
+            "http://localhost:5173"
+    };
+
+    // CORS - Méthodes autorisées
+    private static final String[] ALLOWED_METHODS = {
+            "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
+        return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
-                        // Endpoints publics (authentification)
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // Endpoints publics
+                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
 
                         // Documentation et monitoring
-                        .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/swagger-ui/index.html",
-                                "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**")
-                        .permitAll()
+                        .requestMatchers(DOCUMENTATION_ENDPOINTS).permitAll()
 
-                        // WebSocket pour notifications
-                        .requestMatchers("/ws/**").permitAll()
+                        // WebSocket
+                        .requestMatchers(WEBSOCKET_ENDPOINTS).permitAll()
 
-                        // Endpoints publics (données de référence)
-                        .requestMatchers("/api/pays/**").permitAll()
-                        .requestMatchers("/api/regions/**").permitAll()
-                        .requestMatchers("/api/villes/**").permitAll()
+                        // Données de référence publiques
+                        .requestMatchers(REFERENCE_DATA_ENDPOINTS).permitAll()
 
-                        // Endpoints authentifiés (utilisateurs connectés)
-                        .requestMatchers("/api/utilisateurs/**").authenticated()
-                        .requestMatchers("/api/voyages/**").authenticated()
-                        .requestMatchers("/api/colis/**").authenticated()
-                        .requestMatchers("/api/avis/**").authenticated()
-                        .requestMatchers("/api/messages/**").authenticated()
-                        .requestMatchers("/api/localisations/**").authenticated()
-                        .requestMatchers("/api/notifications/**").authenticated()
-                        .requestMatchers("/api/paiements/**").authenticated()
-                        .requestMatchers("/api/recus/**").authenticated()
-                        .requestMatchers("/api/reclamations/**").authenticated()
-                        .requestMatchers("/api/incidents/**").authenticated()
-                        .requestMatchers("/api/historiques/**").authenticated()
+                        // Endpoints authentifiés
+                        .requestMatchers(AUTHENTICATED_ENDPOINTS).authenticated()
 
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Autoriser le frontend Tanaye en production et localhost en développement
-        configuration.setAllowedOrigins(List.of(
-                "https://tanaye.vercel.app",
-                "http://localhost:3000",
-                "http://localhost:4200",
-                "http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+
+        // Configuration CORS
+        configuration.setAllowedOrigins(List.of(ALLOWED_ORIGINS));
+        configuration.setAllowedMethods(List.of(ALLOWED_METHODS));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
@@ -114,4 +149,5 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
 }
