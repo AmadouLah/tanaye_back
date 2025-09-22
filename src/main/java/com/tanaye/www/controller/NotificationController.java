@@ -6,11 +6,13 @@ import com.tanaye.www.enums.TypeNotification;
 import com.tanaye.www.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +21,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationController {
 
     private final NotificationService notificationService;
@@ -46,6 +49,9 @@ public class NotificationController {
     @Operation(summary = "Marquer une notification comme lue")
     public ResponseEntity<Void> marquerLu(@PathVariable Long id, @RequestParam Long userId) {
         notificationService.marquerCommeLue(id, userId);
+        // Envoyer le nouveau count via WebSocket
+        notificationService.envoyerCountNotificationsNonLues(
+                notificationService.trouverUtilisateurParId(userId));
         return ResponseEntity.ok().build();
     }
 
@@ -53,6 +59,9 @@ public class NotificationController {
     @Operation(summary = "Marquer toutes les notifications comme lues")
     public ResponseEntity<Integer> marquerToutesCommeLues(@PathVariable Long userId) {
         int count = notificationService.marquerToutesCommeLues(userId);
+        // Envoyer le nouveau count via WebSocket (0 car toutes marquées comme lues)
+        notificationService.envoyerCountNotificationsNonLues(
+                notificationService.trouverUtilisateurParId(userId));
         return ResponseEntity.ok(count);
     }
 
@@ -82,9 +91,83 @@ public class NotificationController {
         return ResponseEntity.ok(count);
     }
 
-    @MessageMapping("notifications/{userId}/lire")
+    // ===== ENDPOINTS WEBSOCKET =====
+
+    /**
+     * Marque une notification comme lue via WebSocket
+     * Endpoint: /app/notifications/{userId}/marquer-lue
+     */
+    @MessageMapping("/notifications/{userId}/marquer-lue")
     @PreAuthorize("isAuthenticated()")
-    public void marquerLuWs(@DestinationVariable Long userId) {
-        // endpoint symbolique si besoin futur
+    public void marquerLuWebSocket(@DestinationVariable Long userId, @Payload Map<String, Object> payload) {
+        try {
+            Long notificationId = Long.valueOf(payload.get("notificationId").toString());
+            log.info("WebSocket: Marquer notification {} comme lue pour utilisateur {}", notificationId, userId);
+
+            notificationService.marquerCommeLue(notificationId, userId);
+
+            // Envoyer le nouveau count via WebSocket
+            notificationService.envoyerCountNotificationsNonLues(
+                    notificationService.trouverUtilisateurParId(userId));
+        } catch (Exception e) {
+            log.error("Erreur lors du marquage de notification via WebSocket: {}", e.getMessage());
+        }
     }
+
+    /**
+     * Marque toutes les notifications comme lues via WebSocket
+     * Endpoint: /app/notifications/{userId}/marquer-toutes-lues
+     */
+    @MessageMapping("/notifications/{userId}/marquer-toutes-lues")
+    @PreAuthorize("isAuthenticated()")
+    public void marquerToutesLuesWebSocket(@DestinationVariable Long userId) {
+        try {
+            log.info("WebSocket: Marquer toutes les notifications comme lues pour utilisateur {}", userId);
+
+            notificationService.marquerToutesCommeLues(userId);
+
+            // Envoyer le nouveau count via WebSocket (0 car toutes marquées comme lues)
+            notificationService.envoyerCountNotificationsNonLues(
+                    notificationService.trouverUtilisateurParId(userId));
+        } catch (Exception e) {
+            log.error("Erreur lors du marquage de toutes les notifications via WebSocket: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Demande le count actuel des notifications non lues via WebSocket
+     * Endpoint: /app/notifications/{userId}/demander-count
+     */
+    @MessageMapping("/notifications/{userId}/demander-count")
+    @PreAuthorize("isAuthenticated()")
+    public void demanderCountWebSocket(@DestinationVariable Long userId) {
+        try {
+            log.debug("WebSocket: Demande count notifications non lues pour utilisateur {}", userId);
+
+            // Envoyer le count actuel via WebSocket
+            notificationService.envoyerCountNotificationsNonLues(
+                    notificationService.trouverUtilisateurParId(userId));
+        } catch (Exception e) {
+            log.error("Erreur lors de la demande de count via WebSocket: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Souscription aux notifications d'un utilisateur
+     * Endpoint: /app/notifications/{userId}/souscrire
+     */
+    @MessageMapping("/notifications/{userId}/souscrire")
+    @PreAuthorize("isAuthenticated()")
+    public void souscrireNotifications(@DestinationVariable Long userId) {
+        try {
+            log.info("WebSocket: Souscription aux notifications pour utilisateur {}", userId);
+
+            // Envoyer immédiatement le count actuel
+            notificationService.envoyerCountNotificationsNonLues(
+                    notificationService.trouverUtilisateurParId(userId));
+        } catch (Exception e) {
+            log.error("Erreur lors de la souscription aux notifications via WebSocket: {}", e.getMessage());
+        }
+    }
+
 }

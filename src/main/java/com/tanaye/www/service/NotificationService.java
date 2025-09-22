@@ -5,6 +5,7 @@ import com.tanaye.www.entity.Notification;
 import com.tanaye.www.entity.Utilisateur;
 import com.tanaye.www.enums.TypeNotification;
 import com.tanaye.www.repository.NotificationRepository;
+import com.tanaye.www.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,7 @@ import java.util.Map;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final UtilisateurRepository utilisateurRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
@@ -103,5 +105,127 @@ public class NotificationService {
     public int nettoyerAnciennes(Long userId, int joursRetention) {
         LocalDateTime dateLimite = LocalDateTime.now().minusDays(joursRetention);
         return notificationRepository.supprimerAnciennes(userId, dateLimite);
+    }
+
+    @Transactional(readOnly = true)
+    public Utilisateur trouverUtilisateurParId(Long userId) {
+        return utilisateurRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur non trouvé avec l'ID: " + userId));
+    }
+
+    // ===== MÉTHODES WEBSOCKET INTÉGRÉES =====
+
+    /**
+     * Envoie le count des notifications non lues via WebSocket
+     */
+    public void envoyerCountNotificationsNonLues(Utilisateur utilisateur) {
+        String destination = "/topic/notifications/" + utilisateur.getId() + "/count";
+        long count = countNonLues(utilisateur.getId());
+
+        log.debug("Envoi count notifications non lues WebSocket à l'utilisateur {}: {}", utilisateur.getId(), count);
+        messagingTemplate.convertAndSend(destination, Map.of("count", count));
+    }
+
+    /**
+     * Notifie un nouveau message reçu (base + WebSocket)
+     */
+    public void notifierNouveauMessage(Utilisateur destinataire, String expediteurNom, Long messageId) {
+        // Créer notification en base
+        notifier(destinataire, "Nouveau message",
+                "Vous avez reçu un nouveau message de " + expediteurNom, TypeNotification.NOUVEAU_MESSAGE);
+
+        // Envoyer message WebSocket spécifique
+        String destination = "/topic/notifications/" + destinataire.getId();
+        NotificationMessage message = new NotificationMessage(
+                "Nouveau message",
+                "Vous avez reçu un nouveau message de " + expediteurNom,
+                "NOUVEAU_MESSAGE",
+                messageId);
+
+        log.info("Notification nouveau message WebSocket à l'utilisateur {}: {}", destinataire.getId(), expediteurNom);
+        messagingTemplate.convertAndSend(destination, message);
+
+        // Mettre à jour le count
+        envoyerCountNotificationsNonLues(destinataire);
+    }
+
+    /**
+     * Notifie l'assignation d'un colis (base + WebSocket)
+     */
+    public void notifierColisAssigne(Utilisateur destinataire, String colisDescription, Long colisId) {
+        // Créer notification en base
+        notifier(destinataire, "Colis assigné",
+                "Un colis vous a été assigné: " + colisDescription, TypeNotification.COLIS_AFFECTE);
+
+        // Envoyer message WebSocket spécifique
+        String destination = "/topic/notifications/" + destinataire.getId();
+        NotificationMessage message = new NotificationMessage(
+                "Colis assigné",
+                "Un colis vous a été assigné: " + colisDescription,
+                "COLIS_AFFECTE",
+                colisId);
+
+        log.info("Notification colis assigné WebSocket à l'utilisateur {}: {}", destinataire.getId(), colisDescription);
+        messagingTemplate.convertAndSend(destination, message);
+
+        // Mettre à jour le count
+        envoyerCountNotificationsNonLues(destinataire);
+    }
+
+    /**
+     * Notifie la confirmation d'un paiement (base + WebSocket)
+     */
+    public void notifierPaiementConfirme(Utilisateur destinataire, String montant, Long paiementId) {
+        // Créer notification en base
+        notifier(destinataire, "Paiement confirmé",
+                "Votre paiement de " + montant + " a été confirmé", TypeNotification.PAIEMENT_RECU);
+
+        // Envoyer message WebSocket spécifique
+        String destination = "/topic/notifications/" + destinataire.getId();
+        NotificationMessage message = new NotificationMessage(
+                "Paiement confirmé",
+                "Votre paiement de " + montant + " a été confirmé",
+                "PAIEMENT_RECU",
+                paiementId);
+
+        log.info("Notification paiement confirmé WebSocket à l'utilisateur {}: {}", destinataire.getId(), montant);
+        messagingTemplate.convertAndSend(destination, message);
+
+        // Mettre à jour le count
+        envoyerCountNotificationsNonLues(destinataire);
+    }
+
+    /**
+     * Classe interne pour les messages de notification WebSocket
+     */
+    public static class NotificationMessage {
+        private final String titre;
+        private final String contenu;
+        private final String type;
+        private final Long referenceId;
+
+        public NotificationMessage(String titre, String contenu, String type, Long referenceId) {
+            this.titre = titre;
+            this.contenu = contenu;
+            this.type = type;
+            this.referenceId = referenceId;
+        }
+
+        // Getters
+        public String getTitre() {
+            return titre;
+        }
+
+        public String getContenu() {
+            return contenu;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public Long getReferenceId() {
+            return referenceId;
+        }
     }
 }
