@@ -19,16 +19,20 @@ public interface ReclamationRepository extends JpaRepository<Reclamation, Long> 
     Page<Reclamation> findByColisIdOrderByDateCreationDesc(Long colisId, Pageable pageable);
 
     @Query("SELECT r FROM Reclamation r WHERE r.expediteur.id = :userId AND r.dateCreation BETWEEN :debut AND :fin ORDER BY r.dateCreation DESC")
-    Page<Reclamation> findByExpediteurEtDateRange(@Param("userId") Long userId, @Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin, Pageable pageable);
+    Page<Reclamation> findByExpediteurEtDateRange(@Param("userId") Long userId, @Param("debut") LocalDateTime debut,
+            @Param("fin") LocalDateTime fin, Pageable pageable);
 
     @Query("SELECT r FROM Reclamation r WHERE r.expediteur.id = :userId AND r.statut = :statut ORDER BY r.dateCreation DESC")
-    Page<Reclamation> findByExpediteurEtStatut(@Param("userId") Long userId, @Param("statut") String statut, Pageable pageable);
+    Page<Reclamation> findByExpediteurEtStatut(@Param("userId") Long userId, @Param("statut") String statut,
+            Pageable pageable);
 
     @Query("SELECT r FROM Reclamation r WHERE r.expediteur.id = :userId AND r.type = :type ORDER BY r.dateCreation DESC")
-    Page<Reclamation> findByExpediteurEtType(@Param("userId") Long userId, @Param("type") String type, Pageable pageable);
+    Page<Reclamation> findByExpediteurEtType(@Param("userId") Long userId, @Param("type") String type,
+            Pageable pageable);
 
-    @Query("SELECT r FROM Reclamation r WHERE r.expediteur.id = :userId AND (LOWER(r.sujet) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(r.description) LIKE LOWER(CONCAT('%', :q, '%'))) ORDER BY r.dateCreation DESC")
-    Page<Reclamation> rechercherParExpediteur(@Param("userId") Long userId, @Param("q") String query, Pageable pageable);
+    @Query("SELECT r FROM Reclamation r WHERE r.expediteur.id = :userId AND (LOWER(r.objet) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(r.description) LIKE LOWER(CONCAT('%', :q, '%'))) ORDER BY r.dateCreation DESC")
+    Page<Reclamation> rechercherParExpediteur(@Param("userId") Long userId, @Param("q") String query,
+            Pageable pageable);
 
     @Query("SELECT COUNT(r) FROM Reclamation r WHERE r.expediteur.id = :userId AND r.statut = :statut")
     long countParExpediteurEtStatut(@Param("userId") Long userId, @Param("statut") String statut);
@@ -49,7 +53,8 @@ public interface ReclamationRepository extends JpaRepository<Reclamation, Long> 
     Page<Reclamation> findByType(@Param("type") String type, Pageable pageable);
 
     @Query("SELECT r FROM Reclamation r WHERE r.dateCreation BETWEEN :debut AND :fin ORDER BY r.dateCreation DESC")
-    Page<Reclamation> findByDateRange(@Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin, Pageable pageable);
+    Page<Reclamation> findByDateRange(@Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin,
+            Pageable pageable);
 
     @Query("SELECT r FROM Reclamation r WHERE r.statut = 'EN_ATTENTE' AND r.dateCreation < :dateLimite")
     List<Reclamation> findEnAttenteAnciennes(@Param("dateLimite") LocalDateTime dateLimite);

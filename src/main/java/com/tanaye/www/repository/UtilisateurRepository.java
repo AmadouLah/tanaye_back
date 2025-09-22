@@ -52,6 +52,6 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
     @Query("SELECT COUNT(u) FROM Utilisateur u WHERE u.role = :role AND u.estVerifie = true")
     long countVerifiesParRole(@Param("role") RoleUtilisateur role);
 
-    @Query("SELECT u FROM Utilisateur u WHERE u.statut = 'ACTIF' AND u.derniereConnexion IS NOT NULL AND u.derniereConnexion > :limite ORDER BY u.derniereConnexion DESC")
+    @Query("SELECT u FROM Utilisateur u WHERE u.statut = 'ACTIF' AND u.dateModification IS NOT NULL AND u.dateModification > :limite ORDER BY u.dateModification DESC")
     List<Utilisateur> actifsRecents(@Param("limite") java.time.LocalDateTime limite);
 }
