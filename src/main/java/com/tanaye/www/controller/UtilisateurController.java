@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -71,5 +73,23 @@ public class UtilisateurController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
         return ResponseEntity.ok(utilisateurService.listerVerifiesParRole(role, page, size));
+    }
+
+    @GetMapping("/verifies/count")
+    @Operation(summary = "Compter les utilisateurs vérifiés")
+    public ResponseEntity<Long> countVerifies() {
+        return ResponseEntity.ok(utilisateurService.compterVerifies());
+    }
+
+    @GetMapping("/verifies/count-role")
+    @Operation(summary = "Compter les utilisateurs vérifiés par rôle")
+    public ResponseEntity<Long> countVerifiesParRole(@RequestParam RoleUtilisateur role) {
+        return ResponseEntity.ok(utilisateurService.compterVerifiesParRole(role));
+    }
+
+    @GetMapping("/actifs-recents")
+    @Operation(summary = "Lister les utilisateurs actifs récemment")
+    public ResponseEntity<java.util.List<Utilisateur>> actifsRecents(@RequestParam(defaultValue = "30") int jours) {
+        return ResponseEntity.ok(utilisateurService.actifsRecents(jours));
     }
 }

@@ -29,6 +29,15 @@ public class Reclamation extends EntiteAuditable {
     @Column(nullable = false, length = 2000)
     private String description;
 
+    @Column(length = 50)
+    private String type;
+
+    @Column(length = 50)
+    private String statut;
+
+    @Column(length = 1000)
+    private String commentaire;
+
     @NotNull
     @Column(name = "acceptees_cgu", nullable = false)
     private Boolean accepteCgu; // confirmation d'avoir pris connaissance des CGU

@@ -19,6 +19,12 @@ public class Ville extends EntiteAuditable {
     @Column(nullable = false)
     private String nom;
 
+    @Column(length = 50)
+    private String type;
+
+    @Column(nullable = false)
+    private Boolean actif = true;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "region_id", nullable = false)
     private Region region;

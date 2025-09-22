@@ -40,6 +40,21 @@ public class Voyage extends EntiteAuditable {
     @Column(name = "capacite_poids") // capacité maximale en kg
     private Double capacitePoids;
 
+    @Column(name = "poids_max")
+    private Double poidsMax;
+
+    @Column(name = "prix")
+    private Double prix;
+
+    @Column(name = "date_arrivee_prevue")
+    private LocalDateTime dateArriveePrevue;
+
+    @Column(length = 50)
+    private String type;
+
+    @Column(name = "mode_transport", length = 50)
+    private String modeTransport;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "statut")
     private StatutVoyage statut = StatutVoyage.OUVERT;
@@ -51,4 +66,3 @@ public class Voyage extends EntiteAuditable {
     @OneToMany(mappedBy = "voyage")
     private List<Colis> colisAttribues;
 }
-

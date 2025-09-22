@@ -22,6 +22,9 @@ public class Region extends EntiteAuditable {
     @Column(nullable = false, unique = true)
     private String nom;
 
+    @Column(nullable = false)
+    private Boolean actif = true;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pays_id", nullable = false)
     private Pays pays;

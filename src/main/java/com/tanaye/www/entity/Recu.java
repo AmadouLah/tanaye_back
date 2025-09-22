@@ -43,6 +43,12 @@ public class Recu extends EntiteAuditable {
     @Column(name = "date_emission", nullable = false)
     private LocalDateTime dateEmission;
 
+    @Column(length = 50)
+    private String type;
+
+    @Column(length = 50)
+    private String statut;
+
     @Lob
     @Column(name = "contenu", nullable = false)
     private String contenu; // version textuelle du reçu

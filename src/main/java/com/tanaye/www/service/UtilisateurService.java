@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.List;
+import java.time.LocalDateTime;
 
 @Service
 @Transactional
@@ -42,6 +44,9 @@ public class UtilisateurService {
     public Page<Utilisateur> rechercher(String terme, RoleUtilisateur role, StatutUtilisateur statut, Boolean verifie,
             int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
+        if (terme != null && !terme.isBlank() && role != null) {
+            return utilisateurRepository.rechercherParRole(role, terme, pageable);
+        }
         if (role != null && statut != null) {
             return utilisateurRepository.findByRoleAndStatutOrderByDateCreationDesc(role, statut, pageable);
         }
@@ -58,9 +63,7 @@ public class UtilisateurService {
             return utilisateurRepository.findByEstVerifieTrueOrderByDateCreationDesc(pageable);
         }
         if (terme != null && !terme.isBlank()) {
-            return utilisateurRepository
-                    .findByNomContainingIgnoreCaseOrPrenomContainingIgnoreCaseOrEmailContainingIgnoreCase(terme, terme,
-                            terme, pageable);
+            return utilisateurRepository.rechercher(terme, pageable);
         }
         return utilisateurRepository.findAll(pageable);
     }
@@ -84,5 +87,21 @@ public class UtilisateurService {
     public Page<Utilisateur> listerVerifiesParRole(RoleUtilisateur role, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return utilisateurRepository.findByRoleAndEstVerifieTrueOrderByDateCreationDesc(role, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public long compterVerifies() {
+        return utilisateurRepository.countVerifies();
+    }
+
+    @Transactional(readOnly = true)
+    public long compterVerifiesParRole(RoleUtilisateur role) {
+        return utilisateurRepository.countVerifiesParRole(role);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Utilisateur> actifsRecents(int jours) {
+        LocalDateTime limite = LocalDateTime.now().minusDays(jours);
+        return utilisateurRepository.actifsRecents(limite);
     }
 }
