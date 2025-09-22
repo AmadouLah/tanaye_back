@@ -39,33 +39,36 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
+                        // Endpoints publics (authentification)
                         .requestMatchers("/api/auth/**").permitAll()
+
+                        // Documentation et monitoring
                         .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/swagger-ui/index.html",
                                 "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**")
                         .permitAll()
-                        .requestMatchers("/api/test/public").permitAll()
-                        .requestMatchers("/api/statistiques/**").permitAll()
-                        .requestMatchers("/api/public/**").permitAll()
 
-                        // Fichiers (couvertures, PDF) servis par LivreController
-                        .requestMatchers("/api/livres/fichiers/**").permitAll()
+                        // WebSocket pour notifications
+                        .requestMatchers("/ws/**").permitAll()
 
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // Endpoints publics (données de référence)
+                        .requestMatchers("/api/pays/**").permitAll()
+                        .requestMatchers("/api/regions/**").permitAll()
+                        .requestMatchers("/api/villes/**").permitAll()
 
-                        .requestMatchers("/api/bibliothecaire/**").hasAnyRole("ADMIN", "BIBLIOTHECAIRE")
-                        .requestMatchers("/api/bibliothecaire/categories/**").hasAnyRole("ADMIN", "BIBLIOTHECAIRE")
-                        .requestMatchers("/api/bibliothecaire/editeurs/**").hasAnyRole("ADMIN", "BIBLIOTHECAIRE")
-                        .requestMatchers("/api/bibliothecaire/emprunts/**").hasAnyRole("ADMIN", "BIBLIOTHECAIRE")
-                        .requestMatchers("/api/bibliothecaire/livre-auteurs/**").hasAnyRole("ADMIN", "BIBLIOTHECAIRE")
-                        .requestMatchers("/api/bibliothecaire/livre-categories/**")
-                        .hasAnyRole("ADMIN", "BIBLIOTHECAIRE")
-
-                        .requestMatchers("/api/livres/**", "/api/evaluations/**", "/api/favoris/**",
-                                "/api/reservations/**", "/api/abonnements/**", "/api/auteurs/**",
-                                "/api/v1/historiques-lecture/**", "/api/notifications/**")
-                        .authenticated()
+                        // Endpoints authentifiés (utilisateurs connectés)
+                        .requestMatchers("/api/utilisateurs/**").authenticated()
+                        .requestMatchers("/api/voyages/**").authenticated()
+                        .requestMatchers("/api/colis/**").authenticated()
+                        .requestMatchers("/api/avis/**").authenticated()
+                        .requestMatchers("/api/messages/**").authenticated()
+                        .requestMatchers("/api/localisations/**").authenticated()
+                        .requestMatchers("/api/notifications/**").authenticated()
+                        .requestMatchers("/api/paiements/**").authenticated()
+                        .requestMatchers("/api/recus/**").authenticated()
+                        .requestMatchers("/api/reclamations/**").authenticated()
+                        .requestMatchers("/api/incidents/**").authenticated()
+                        .requestMatchers("/api/historiques/**").authenticated()
 
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
@@ -79,12 +82,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Autoriser le frontend Vercel en production et localhost en développement
+        // Autoriser le frontend Tanaye en production et localhost en développement
         configuration.setAllowedOrigins(List.of(
-                "https://bibliosup.vercel.app",
+                "https://tanaye.vercel.app",
+                "http://localhost:3000",
                 "http://localhost:4200",
                 "http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
