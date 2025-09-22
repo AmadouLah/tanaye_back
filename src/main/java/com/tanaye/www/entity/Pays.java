@@ -22,7 +22,12 @@ public class Pays extends EntiteAuditable {
     @Column(name = "code_iso", nullable = false, unique = true, length = 3)
     private String codeIso; // exemple: "ML" pour Mali
 
+    @Column(length = 50)
+    private String continent;
+
+    @Column(nullable = false)
+    private Boolean actif = true;
+
     @OneToMany(mappedBy = "pays")
     private List<Region> regions;
 }
-

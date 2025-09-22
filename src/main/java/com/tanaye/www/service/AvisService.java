@@ -33,6 +33,9 @@ public class AvisService {
                 .orElseThrow(() -> new IllegalArgumentException("Auteur introuvable: " + auteurId));
         Utilisateur destinataire = utilisateurRepository.findById(destinataireId)
                 .orElseThrow(() -> new IllegalArgumentException("Destinataire introuvable: " + destinataireId));
+        if (avisRepository.existsByAuteurIdAndDestinataireId(auteurId, destinataireId)) {
+            throw new IllegalStateException("Vous avez déjà noté cet utilisateur");
+        }
 
         Avis a = new Avis();
         a.setAuteur(auteur);
@@ -63,7 +66,31 @@ public class AvisService {
     }
 
     @Transactional(readOnly = true)
-    public Page<TopVoyageurProjection> topVoyageursFiables(Pageable pageable) {
-        return avisRepository.topVoyageursFiables(pageable);
+    public Page<TopVoyageurProjection> topVoyageursFiables(long minAvis, Pageable pageable) {
+        return avisRepository.topVoyageursFiables(minAvis, pageable);
+    }
+
+    public Avis mettreAJour(Long avisId, Long auteurId, Integer note, String commentaire) {
+        if (note != null && (note < 1 || note > 5))
+            throw new IllegalArgumentException("Note invalide");
+        Avis avis = avisRepository.findById(avisId)
+                .orElseThrow(() -> new IllegalArgumentException("Avis introuvable: " + avisId));
+        if (!avis.getAuteur().getId().equals(auteurId)) {
+            throw new IllegalStateException("Seul l'auteur peut modifier l'avis");
+        }
+        if (note != null)
+            avis.setNote(note);
+        if (commentaire != null)
+            avis.setCommentaire(commentaire);
+        return avisRepository.save(avis);
+    }
+
+    public void supprimer(Long avisId, Long auteurId) {
+        Avis avis = avisRepository.findById(avisId)
+                .orElseThrow(() -> new IllegalArgumentException("Avis introuvable: " + avisId));
+        if (!avis.getAuteur().getId().equals(auteurId)) {
+            throw new IllegalStateException("Seul l'auteur peut supprimer l'avis");
+        }
+        avisRepository.delete(avis);
     }
 }

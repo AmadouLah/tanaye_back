@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/messages")
@@ -43,5 +44,36 @@ public class MessageController {
             @RequestParam(defaultValue = "12") int size) {
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(messageService.boiteEnvoi(auteurId, pageable));
+    }
+
+    @GetMapping("/conversation")
+    @Operation(summary = "Conversation entre deux utilisateurs")
+    public ResponseEntity<Page<Message>> conversation(@RequestParam Long u1,
+            @RequestParam Long u2,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(messageService.conversation(u1, u2, pageable));
+    }
+
+    @PostMapping("/conversation/lire")
+    @Operation(summary = "Marquer comme lue la conversation reçue d'un interlocuteur")
+    public ResponseEntity<Integer> marquerLue(@RequestParam Long destinataireId, @RequestParam Long auteurId) {
+        int updated = messageService.marquerConversationLue(destinataireId, auteurId);
+        return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping("/non-lus")
+    @Operation(summary = "Compteur des non-lus par interlocuteur pour un destinataire")
+    public ResponseEntity<Map<Long, Long>> nonLus(@RequestParam Long destinataireId) {
+        return ResponseEntity.ok(messageService.nonLusParInterlocuteur(destinataireId));
+    }
+
+    @GetMapping("/threads")
+    @Operation(summary = "Liste des threads: dernier message + compteur non lus")
+    public ResponseEntity<java.util.List<java.util.Map<String, Object>>> threads(@RequestParam Long userId,
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "50") int limit) {
+        return ResponseEntity.ok(messageService.listeThreads(userId, q, limit));
     }
 }

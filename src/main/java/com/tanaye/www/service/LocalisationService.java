@@ -38,4 +38,15 @@ public class LocalisationService {
     public Page<Localisation> historique(Long utilisateurId, Pageable pageable) {
         return localisationRepository.findByUtilisateurIdOrderByTimestampDesc(utilisateurId, pageable);
     }
+
+    @Transactional(readOnly = true)
+    public Page<Localisation> historiqueEntre(Long utilisateurId, java.time.LocalDateTime debut, java.time.LocalDateTime fin, Pageable pageable) {
+        return localisationRepository.findByUtilisateurIdAndTimestampBetweenOrderByTimestampDesc(utilisateurId, debut, fin, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Localisation> rechercheBoite(java.time.LocalDateTime debut, java.time.LocalDateTime fin,
+                                             Double minLat, Double maxLat, Double minLng, Double maxLng, Pageable pageable) {
+        return localisationRepository.findInBoundingBox(debut, fin, minLat, maxLat, minLng, maxLng, pageable);
+    }
 }

@@ -1,10 +1,12 @@
 package com.tanaye.www.service;
 
 import com.tanaye.www.entity.Colis;
+import com.tanaye.www.entity.Voyage;
 import com.tanaye.www.entity.Utilisateur;
 import com.tanaye.www.enums.StatutColis;
 import com.tanaye.www.enums.TypeColis;
 import com.tanaye.www.repository.ColisRepository;
+import com.tanaye.www.repository.VoyageRepository;
 import com.tanaye.www.repository.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,8 @@ public class ColisService {
     private final ColisRepository colisRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final HistoriqueService historiqueService;
+    private final VoyageRepository voyageRepository;
+    private final NotificationService notificationService;
 
     public Colis creer(Long expediteurId, Colis colis) {
         log.info("Création colis par expediteur {}", expediteurId);
@@ -65,5 +69,36 @@ public class ColisService {
                 .orElseThrow(() -> new IllegalArgumentException("Colis introuvable: " + colisId));
         c.setStatut(statut);
         return colisRepository.save(c);
+    }
+
+    public Colis affecterAuVoyage(Long colisId, Long voyageId) {
+        Colis c = colisRepository.findById(colisId)
+                .orElseThrow(() -> new IllegalArgumentException("Colis introuvable: " + colisId));
+        Voyage v = voyageRepository.findById(voyageId)
+                .orElseThrow(() -> new IllegalArgumentException("Voyage introuvable: " + voyageId));
+
+        if (v.getStatut() != com.tanaye.www.enums.StatutVoyage.OUVERT)
+            throw new IllegalStateException("Voyage non ouvert");
+
+        Double dejaAlloue = colisRepository.totalPoidsParVoyage(voyageId);
+        Double poidsColis = c.getPoids() != null ? c.getPoids() : 0d;
+        Double capacite = v.getCapacitePoids() != null ? v.getCapacitePoids() : 0d;
+        if (dejaAlloue + poidsColis > capacite)
+            throw new IllegalStateException("Capacité du voyage dépassée");
+
+        c.setVoyage(v);
+        c.setStatut(StatutColis.EN_COURS);
+        Colis saved = colisRepository.save(c);
+        historiqueService.enregistrer(c.getExpediteur(), "COLIS_AFFECTE_VOYAGE",
+                "Colis " + saved.getId() + " -> voyage " + v.getId());
+        if (c.getExpediteur() != null) {
+            notificationService.notifier(c.getExpediteur(), "Colis affecté",
+                    "Votre colis " + saved.getId() + " a été affecté au voyage " + v.getId());
+        }
+        if (v.getVoyageur() != null) {
+            notificationService.notifier(v.getVoyageur(), "Nouveau colis",
+                    "Un colis " + saved.getId() + " a été affecté à votre voyage " + v.getId());
+        }
+        return saved;
     }
 }

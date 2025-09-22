@@ -25,6 +25,9 @@ public class Notification extends EntiteAuditable {
     @Column(nullable = false, length = 1000)
     private String contenu;
 
+    @Column(length = 50)
+    private String type;
+
     @NotNull
     @Column(name = "est_lu", nullable = false)
     private Boolean estLu = false;

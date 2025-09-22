@@ -1,0 +1,17 @@
+package com.tanaye.www.enums;
+
+public enum TypeNotification {
+    NOUVEAU_MESSAGE,
+    NOUVEAU_COLIS,
+    COLIS_AFFECTE,
+    COLIS_LIVRE,
+    PAIEMENT_RECU,
+    PAIEMENT_ECHEC,
+    RECLAMATION_CREEE,
+    INCIDENT_SIGNALE,
+    AVIS_RECU,
+    VOYAGE_PROPOSE,
+    VOYAGE_ACCEPTE,
+    VOYAGE_REFUSE,
+    SYSTEME
+}

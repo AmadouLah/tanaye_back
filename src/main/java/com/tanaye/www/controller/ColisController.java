@@ -3,6 +3,7 @@ package com.tanaye.www.controller;
 import com.tanaye.www.dto.ColisDTO;
 import com.tanaye.www.dto.ColisRechercheDTO;
 import com.tanaye.www.dto.ColisStatutDTO;
+import com.tanaye.www.dto.ColisAffectationVoyageDTO;
 import com.tanaye.www.entity.Colis;
 import com.tanaye.www.service.ColisService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,5 +42,12 @@ public class ColisController {
     @Operation(summary = "Changer le statut d'un colis")
     public ResponseEntity<Colis> changerStatut(@PathVariable Long colisId, @RequestBody ColisStatutDTO dto) {
         return ResponseEntity.ok(colisService.changerStatut(colisId, dto.statut()));
+    }
+
+    @PutMapping("/{colisId}/affecter-voyage")
+    @Operation(summary = "Affecter un colis à un voyage (vérif statut/capacité)")
+    public ResponseEntity<Colis> affecterVoyage(@PathVariable Long colisId,
+            @RequestBody ColisAffectationVoyageDTO dto) {
+        return ResponseEntity.ok(colisService.affecterAuVoyage(colisId, dto.voyageId()));
     }
 }

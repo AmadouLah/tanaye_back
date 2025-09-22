@@ -57,8 +57,25 @@ public class AvisController {
     @GetMapping("/top-voyageurs")
     @Operation(summary = "Top voyageurs fiables (moyenne et volume d'avis)")
     public ResponseEntity<Page<TopVoyageurProjection>> topVoyageurs(@RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "5") long minAvis) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(avisService.topVoyageursFiables(pageable));
+        return ResponseEntity.ok(avisService.topVoyageursFiables(minAvis, pageable));
+    }
+
+    @PutMapping("/{avisId}")
+    @Operation(summary = "Mettre à jour son avis")
+    public ResponseEntity<Avis> maj(@PathVariable Long avisId,
+            @RequestParam Long auteurId,
+            @RequestParam(required = false) Integer note,
+            @RequestParam(required = false) String commentaire) {
+        return ResponseEntity.ok(avisService.mettreAJour(avisId, auteurId, note, commentaire));
+    }
+
+    @DeleteMapping("/{avisId}")
+    @Operation(summary = "Supprimer son avis")
+    public ResponseEntity<Void> supprimer(@PathVariable Long avisId, @RequestParam Long auteurId) {
+        avisService.supprimer(avisId, auteurId);
+        return ResponseEntity.noContent().build();
     }
 }

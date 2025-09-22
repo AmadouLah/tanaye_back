@@ -47,7 +47,7 @@ public interface AvisRepository extends JpaRepository<Avis, Long> {
             +
             "FROM Avis a JOIN a.destinataire d " +
             "WHERE d.role = com.tanaye.www.enums.RoleUtilisateur.VOYAGEUR AND d.estVerifie = true " +
-            "GROUP BY d.id, d.nom, d.prenom HAVING COUNT(a) >= 5 " +
+            "GROUP BY d.id, d.nom, d.prenom HAVING COUNT(a) >= :minAvis " +
             "ORDER BY moyenne DESC, total DESC")
-    Page<TopVoyageurProjection> topVoyageursFiables(Pageable pageable);
+    Page<TopVoyageurProjection> topVoyageursFiables(@Param("minAvis") long minAvis, Pageable pageable);
 }

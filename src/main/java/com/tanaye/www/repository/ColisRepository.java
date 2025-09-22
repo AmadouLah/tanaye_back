@@ -6,6 +6,8 @@ import com.tanaye.www.enums.TypeColis;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -22,4 +24,7 @@ public interface ColisRepository extends JpaRepository<Colis, Long> {
 
     Page<Colis> findByVilleDepartIdAndVilleArriveeIdOrderByDateCreationDesc(Long villeDepartId, Long villeArriveeId,
             Pageable pageable);
+
+    @Query("SELECT COALESCE(SUM(c.poids),0) FROM Colis c WHERE c.voyage.id = :voyageId")
+    Double totalPoidsParVoyage(@Param("voyageId") Long voyageId);
 }

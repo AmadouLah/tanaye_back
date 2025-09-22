@@ -14,7 +14,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Entity
-@Table(name = "avis")
+@Table(name = "avis", uniqueConstraints = @jakarta.persistence.UniqueConstraint(name = "uk_avis_auteur_destinataire", columnNames = {
+        "auteur_id", "destinataire_id" }))
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Avis extends EntiteAuditable {
@@ -35,4 +36,3 @@ public class Avis extends EntiteAuditable {
     @Column(name = "date_avis", nullable = false)
     private LocalDateTime dateAvis;
 }
-

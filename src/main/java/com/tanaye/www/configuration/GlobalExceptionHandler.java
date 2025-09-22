@@ -49,8 +49,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleIntegrity(DataIntegrityViolationException ex) {
-        String msg = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(msg));
+        String raw = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+        String message = raw != null && raw.toLowerCase().contains("uk_avis_auteur_destinataire")
+                ? "Vous avez déjà noté cet utilisateur"
+                : raw;
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(message));
     }
 
     @ExceptionHandler(RuntimeException.class)
