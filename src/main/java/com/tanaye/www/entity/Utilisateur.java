@@ -18,27 +18,35 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import com.tanaye.www.validation.StrongPassword;
 
 @Entity
 @Table(name = "utilisateurs")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Utilisateur extends EntiteAuditable {
-    @NotBlank @Size(max = 100) @Column(nullable = false, length = 100)
+    @NotBlank
+    @Size(max = 100)
+    @Column(nullable = false, length = 100)
     private String nom;
 
-    @NotBlank @Size(max = 100) @Column(nullable = false, length = 100)
+    @NotBlank
+    @Size(max = 100)
+    @Column(nullable = false, length = 100)
     private String prenom;
 
-    @Email @NotBlank @Column(nullable = false, unique = true)
+    @Email
+    @NotBlank
+    @Column(nullable = false, unique = true)
     private String email;
 
-    @Size(max = 20) @Column(length = 20)
+    @Size(max = 20)
+    @Column(length = 20)
     private String telephone;
 
     @Column(name = "mot_de_passe", nullable = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Size(min = 8, message = "Le mot de passe doit contenir au moins 8 caractères")
+    @StrongPassword
     private String motDePasse;
 
     @Enumerated(EnumType.STRING)

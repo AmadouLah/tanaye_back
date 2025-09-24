@@ -85,6 +85,10 @@ public class AuthService {
             throw new IllegalArgumentException("Les mots de passe ne correspondent pas");
         }
 
+        // Vérifications complémentaires (pas de données personnelles dans le mot de
+        // passe)
+        validerMotDePasseContexteUtilisateur(request);
+
         // Créer le nouvel utilisateur
         Utilisateur utilisateur = new Utilisateur();
         utilisateur.setNom(request.getNom());
@@ -114,5 +118,35 @@ public class AuthService {
         }
 
         return utilisateur;
+    }
+
+    // ===== Validation complémentaire de mot de passe (contexte utilisateur) =====
+    private void validerMotDePasseContexteUtilisateur(RegisterRequest request) {
+        String pwd = request.getMotDePasse();
+        if (pwd == null)
+            return; // la contrainte @NotBlank gère le reste
+
+        String lower = pwd.toLowerCase();
+        // éviter email, nom, prénom, téléphone inclus dans le mot de passe
+        if (containsNonTrivial(lower, safe(request.getEmail()))
+                || containsNonTrivial(lower, safe(request.getNom()))
+                || containsNonTrivial(lower, safe(request.getPrenom()))
+                || containsNonTrivial(lower, safe(request.getTelephone()))) {
+            throw new IllegalArgumentException("Le mot de passe ne doit pas contenir vos informations personnelles");
+        }
+    }
+
+    private String safe(String s) {
+        return s == null ? "" : s.trim().toLowerCase();
+    }
+
+    private boolean containsNonTrivial(String haystack, String needle) {
+        if (needle.isBlank())
+            return false;
+        // ignorer symboles communs dans téléphone/mail
+        String normalized = needle.replaceAll("[\\s._@+()-]", "");
+        if (normalized.length() < 3)
+            return false; // au moins 3 chars significatifs
+        return haystack.contains(normalized);
     }
 }
