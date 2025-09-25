@@ -6,7 +6,6 @@ import com.tanaye.www.dto.RegisterRequest;
 import com.tanaye.www.entity.Utilisateur;
 import com.tanaye.www.repository.UtilisateurRepository;
 import com.tanaye.www.security.CustomUserDetails;
-import com.tanaye.www.service.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,8 +29,9 @@ public class AuthService {
     private final JwtService jwtService;
     private final UtilisateurRepository utilisateurRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MailService mailService;
 
-    private static final int MAX_TENTATIVES_CONNEXION = 5;
+    // Suppression des constantes inutilisées
 
     @Transactional
     public AuthResponse authenticate(LoginRequest request) {
@@ -47,9 +47,9 @@ public class AuthService {
             throw new BadCredentialsException("Identifiants invalides");
         }
 
-        // Vérifier le statut de l'utilisateur
-        if (!utilisateur.getStatut().name().equals("ACTIF")) {
-            throw new BadCredentialsException("Compte désactivé");
+        // Bloquer si non vérifié
+        if (Boolean.FALSE.equals(utilisateur.getEstVerifie())) {
+            throw new BadCredentialsException("Compte non vérifié. Veuillez valider votre email.");
         }
 
         // Authentifier avec Spring Security
@@ -99,13 +99,73 @@ public class AuthService {
         utilisateur.setRole(request.getRole());
         utilisateur.setEstVerifie(false);
 
+        // Générer code de vérification
+        String code = genererCode();
+        utilisateur.setVerificationCode(code);
+        utilisateur.setVerificationExpiration(LocalDateTime.now().plusMinutes(15));
+
         Utilisateur savedUtilisateur = utilisateurRepository.save(utilisateur);
 
-        // Générer le token JWT
-        String token = jwtService.generateToken(new CustomUserDetails(savedUtilisateur));
+        // Envoyer l'email de vérification via Gmail SMTP
+        try {
+            mailService.sendVerificationEmail(savedUtilisateur.getEmail(), code);
+            log.info("Email de vérification envoyé à {}", savedUtilisateur.getEmail());
+        } catch (Exception e) {
+            log.error("Echec envoi email pour {}: {}", savedUtilisateur.getEmail(), e.getMessage());
+            // Ne pas faire échouer l'inscription si l'email ne peut pas être envoyé
+            // L'utilisateur peut toujours demander un renvoi de code
+        }
 
         log.info("Inscription réussie pour l'utilisateur: {}", savedUtilisateur.getEmail());
-        return AuthResponse.from(savedUtilisateur, token);
+        // Ne pas authentifier tant que non vérifié: retourner réponse sans token
+        return AuthResponse.from(savedUtilisateur, null);
+    }
+
+    @Transactional
+    public void verifierCompte(String email, String code) {
+        Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+        if (utilisateur.getVerificationCode() == null || utilisateur.getVerificationExpiration() == null) {
+            throw new IllegalArgumentException("Aucun code de vérification en attente");
+        }
+        if (LocalDateTime.now().isAfter(utilisateur.getVerificationExpiration())) {
+            throw new IllegalArgumentException("Code expiré");
+        }
+        if (!code.equals(utilisateur.getVerificationCode())) {
+            throw new IllegalArgumentException("Code invalide");
+        }
+        utilisateur.setEstVerifie(true);
+        utilisateur.setVerificationCode(null);
+        utilisateur.setVerificationExpiration(null);
+        utilisateurRepository.save(utilisateur);
+    }
+
+    private String genererCode() {
+        int n = (int) (Math.random() * 900000) + 100000; // 6 digits
+        return String.valueOf(n);
+    }
+
+    @Transactional
+    public void renvoyerCode(String email) {
+        Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+        if (Boolean.TRUE.equals(utilisateur.getEstVerifie())) {
+            throw new IllegalArgumentException("Compte déjà vérifié");
+        }
+
+        String code = genererCode();
+        utilisateur.setVerificationCode(code);
+        utilisateur.setVerificationExpiration(LocalDateTime.now().plusMinutes(15));
+        utilisateurRepository.save(utilisateur);
+
+        // Renvoi via Gmail SMTP
+        try {
+            mailService.sendVerificationEmail(utilisateur.getEmail(), code);
+            log.info("Email de vérification renvoyé à {}", utilisateur.getEmail());
+        } catch (Exception e) {
+            log.error("Echec envoi email pour {}: {}", utilisateur.getEmail(), e.getMessage());
+            throw new RuntimeException("Impossible d'envoyer l'email de vérification", e);
+        }
     }
 
     private Optional<Utilisateur> trouverUtilisateurParIdentifiant(String identifiant) {

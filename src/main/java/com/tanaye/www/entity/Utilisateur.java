@@ -11,6 +11,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
@@ -59,6 +60,13 @@ public class Utilisateur extends EntiteAuditable {
 
     @Column(name = "est_verifie")
     private Boolean estVerifie = false; // vérification d'identité
+
+    // Vérification par email
+    @Column(name = "verification_code", length = 8)
+    private String verificationCode;
+
+    @Column(name = "verification_expiration")
+    private java.time.LocalDateTime verificationExpiration;
 
     // Relations
     @OneToMany(mappedBy = "voyageur")
