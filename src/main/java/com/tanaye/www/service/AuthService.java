@@ -106,19 +106,21 @@ public class AuthService {
 
         Utilisateur savedUtilisateur = utilisateurRepository.save(utilisateur);
 
+        boolean emailSent = true;
+        String infoMessage = "Compte créé. Code de vérification envoyé par email.";
         // Envoyer l'email de vérification via Gmail SMTP
         try {
             mailService.sendVerificationEmail(savedUtilisateur.getEmail(), code);
             log.info("Email de vérification envoyé à {}", savedUtilisateur.getEmail());
         } catch (Exception e) {
+            emailSent = false;
+            infoMessage = "Compte créé, mais l'email de vérification n'a pas pu être envoyé. Utilisez 'renvoyer le code'.";
             log.error("Echec envoi email pour {}: {}", savedUtilisateur.getEmail(), e.getMessage());
-            // Ne pas faire échouer l'inscription si l'email ne peut pas être envoyé
-            // L'utilisateur peut toujours demander un renvoi de code
         }
 
         log.info("Inscription réussie pour l'utilisateur: {}", savedUtilisateur.getEmail());
         // Ne pas authentifier tant que non vérifié: retourner réponse sans token
-        return AuthResponse.from(savedUtilisateur, null);
+        return AuthResponse.fromWithEmailStatus(savedUtilisateur, null, emailSent, infoMessage);
     }
 
     @Transactional
