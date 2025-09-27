@@ -33,33 +33,26 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
 
-    // ===== CONSTANTES DE CONFIGURATION =====
-
-    // Endpoints publics
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/auth/**"
     };
 
-    // Documentation et monitoring
     private static final String[] DOCUMENTATION_ENDPOINTS = {
             "/actuator/**",
             "/swagger-ui/**", "/swagger-ui.html", "/swagger-ui/index.html",
             "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**"
     };
 
-    // WebSocket
     private static final String[] WEBSOCKET_ENDPOINTS = {
             "/ws/**"
     };
 
-    // Données de référence publiques
     private static final String[] REFERENCE_DATA_ENDPOINTS = {
             "/api/pays/**",
             "/api/regions/**",
             "/api/villes/**"
     };
 
-    // Endpoints authentifiés
     private static final String[] AUTHENTICATED_ENDPOINTS = {
             "/api/utilisateurs/**",
             "/api/voyages/**",
@@ -75,7 +68,6 @@ public class SecurityConfig {
             "/api/historiques/**"
     };
 
-    // CORS - Origines autorisées
     private static final String[] ALLOWED_ORIGINS = {
             "https://tanaye.vercel.app",
             "http://localhost:3000",
@@ -83,7 +75,6 @@ public class SecurityConfig {
             "http://localhost:5173",
     };
 
-    // CORS - Méthodes autorisées
     private static final String[] ALLOWED_METHODS = {
             "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
     };
@@ -94,19 +85,10 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
-                        // Endpoints publics
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-
-                        // Documentation et monitoring
                         .requestMatchers(DOCUMENTATION_ENDPOINTS).permitAll()
-
-                        // WebSocket
                         .requestMatchers(WEBSOCKET_ENDPOINTS).permitAll()
-
-                        // Données de référence publiques
                         .requestMatchers(REFERENCE_DATA_ENDPOINTS).permitAll()
-
-                        // Endpoints authentifiés
                         .requestMatchers(AUTHENTICATED_ENDPOINTS).authenticated()
 
                         .anyRequest().authenticated())
@@ -121,7 +103,6 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Configuration CORS
         configuration.setAllowedOrigins(List.of(ALLOWED_ORIGINS));
         configuration.setAllowedMethods(List.of(ALLOWED_METHODS));
         configuration.setAllowedHeaders(List.of("*"));
