@@ -26,18 +26,18 @@ public class VilleService {
     private final VilleRepository villeRepository;
     private final RegionRepository regionRepository;
 
-    public Ville creer(Long regionId, Ville v) {
-        return creer(regionId, v, TypeVille.AUTRE);
+    public Ville creer(Long regionId, Ville ville) {
+        return creer(regionId, ville, TypeVille.AUTRE);
     }
 
-    public Ville creer(Long regionId, Ville v, TypeVille type) {
-        log.info("Création ville: {} dans région {}", v.getNom(), regionId);
-        Region r = regionRepository.findById(regionId)
+    public Ville creer(Long regionId, Ville ville, TypeVille type) {
+        log.info("Création ville: {} dans région {}", ville.getNom(), regionId);
+        Region region = regionRepository.findById(regionId)
                 .orElseThrow(() -> new IllegalArgumentException("Région introuvable: " + regionId));
-        v.setRegion(r);
-        v.setType(type.name());
-        v.setActif(true);
-        return villeRepository.save(v);
+        ville.setRegion(region);
+        ville.setType(type.name());
+        ville.setActif(true);
+        return villeRepository.save(ville);
     }
 
     @Transactional(readOnly = true)
@@ -68,20 +68,7 @@ public class VilleService {
 
     @Transactional(readOnly = true)
     public Page<Ville> rechercher(VilleRechercheDTO criteres, Pageable pageable) {
-        if (criteres.getQuery() != null && !criteres.getQuery().trim().isEmpty()) {
-            if (criteres.getRegionId() != null) {
-                return villeRepository.rechercherParRegion(criteres.getRegionId(), criteres.getQuery(), pageable);
-            }
-            return villeRepository.rechercher(criteres.getQuery(), pageable);
-        }
-        if (criteres.getRegionId() != null) {
-            return villeRepository.findByRegionIdOrderByNomAsc(criteres.getRegionId(), pageable);
-        }
-        if (Boolean.TRUE.equals(criteres.getActif())) {
-            List<Ville> resultats = villeRepository.findAllActifs();
-            return new org.springframework.data.domain.PageImpl<>(resultats, pageable, resultats.size());
-        }
-        return villeRepository.findAll(pageable);
+        return villeRepository.rechercher(criteres.getQuery(), pageable);
     }
 
     @Transactional(readOnly = true)

@@ -33,6 +33,7 @@ public class ColisService {
         log.info("Création colis par expediteur {}", expediteurId);
         Utilisateur expediteur = utilisateurRepository.findById(expediteurId)
                 .orElseThrow(() -> new IllegalArgumentException("Expéditeur introuvable: " + expediteurId));
+
         colis.setExpediteur(expediteur);
         colis.setStatut(StatutColis.EN_ATTENTE);
         Colis saved = colisRepository.save(colis);

@@ -69,4 +69,3 @@ public class Colis extends EntiteAuditable {
     @JoinColumn(name = "voyage_id")
     private Voyage voyage; // voyage sélectionné pour transporter le colis
 }
-

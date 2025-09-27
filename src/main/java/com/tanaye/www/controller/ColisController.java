@@ -50,4 +50,5 @@ public class ColisController {
             @RequestBody ColisAffectationVoyageDTO dto) {
         return ResponseEntity.ok(colisService.affecterAuVoyage(colisId, dto.voyageId()));
     }
+
 }
