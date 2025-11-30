@@ -108,7 +108,7 @@ public class AuthService {
 
         boolean emailSent = true;
         String infoMessage = "Compte créé. Code de vérification envoyé par email.";
-        // Envoyer l'email de vérification via Gmail SMTP
+        // Envoyer l'email de vérification via Brevo
         try {
             mailService.sendVerificationEmail(savedUtilisateur.getEmail(), code);
             log.info("Email de vérification envoyé à {}", savedUtilisateur.getEmail());
@@ -160,7 +160,7 @@ public class AuthService {
         utilisateur.setVerificationExpiration(LocalDateTime.now().plusMinutes(15));
         utilisateurRepository.save(utilisateur);
 
-        // Renvoi via Gmail SMTP
+        // Renvoi via Brevo
         try {
             mailService.sendVerificationEmail(utilisateur.getEmail(), code);
             log.info("Email de vérification renvoyé à {}", utilisateur.getEmail());

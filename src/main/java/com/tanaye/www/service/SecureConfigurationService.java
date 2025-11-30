@@ -18,8 +18,8 @@ public class SecureConfigurationService {
     @Value("${spring.datasource.password}")
     private String databasePassword;
 
-    @Value("${supabase.apiKey}")
-    private String supabaseApiKey;
+    @Value("${app.storage.supabase.service-role-key:}")
+    private String supabaseServiceRoleKey;
 
     /**
      * Valide la configuration de sécurité au démarrage
@@ -51,9 +51,9 @@ public class SecureConfigurationService {
     }
 
     private void validateSupabaseConfiguration() {
-        if (supabaseApiKey == null || supabaseApiKey.isEmpty()) {
-            log.error("❌ Clé API Supabase manquante");
-            throw new IllegalStateException("Configuration Supabase incomplète");
+        if (supabaseServiceRoleKey == null || supabaseServiceRoleKey.isEmpty()) {
+            log.warn("⚠️ Clé API Supabase manquante - fonctionnalités de stockage désactivées");
+            return;
         }
         log.info("✅ Configuration Supabase validée");
     }
