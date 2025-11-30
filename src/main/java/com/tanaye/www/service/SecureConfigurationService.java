@@ -24,17 +24,17 @@ public class SecureConfigurationService {
     /**
      * Valide la configuration de sécurité au démarrage
      */
-    public void validateSecurityConfiguration() {
+    public void validerConfigurationSecurite() {
         log.info("🔐 Validation de la configuration de sécurité...");
 
-        validateJwtConfiguration();
-        validateDatabaseConfiguration();
-        validateSupabaseConfiguration();
+        validerConfigurationJwt();
+        validerConfigurationBaseDeDonnees();
+        validerConfigurationSupabase();
 
         log.info("✅ Configuration de sécurité validée");
     }
 
-    private void validateJwtConfiguration() {
+    private void validerConfigurationJwt() {
         if (jwtSecret == null || jwtSecret.length() < 32) {
             log.error("❌ JWT secret manquant ou trop faible (minimum 32 caractères)");
             throw new IllegalStateException("JWT secret invalide");
@@ -42,7 +42,7 @@ public class SecureConfigurationService {
         log.info("✅ Configuration JWT validée");
     }
 
-    private void validateDatabaseConfiguration() {
+    private void validerConfigurationBaseDeDonnees() {
         if (databasePassword == null || databasePassword.isEmpty()) {
             log.error("❌ Mot de passe de base de données manquant");
             throw new IllegalStateException("Configuration de base de données incomplète");
@@ -50,7 +50,7 @@ public class SecureConfigurationService {
         log.info("✅ Configuration de base de données validée");
     }
 
-    private void validateSupabaseConfiguration() {
+    private void validerConfigurationSupabase() {
         if (supabaseServiceRoleKey == null || supabaseServiceRoleKey.isEmpty()) {
             log.warn("⚠️ Clé API Supabase manquante - fonctionnalités de stockage désactivées");
             return;

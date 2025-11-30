@@ -21,7 +21,7 @@ import java.util.List;
 public class MailService {
 
     private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
-    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
+    private static final Duration TIMEOUT_REQUETE = Duration.ofSeconds(30);
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -34,25 +34,25 @@ public class MailService {
         this.brevoApiKey = brevoApiKey;
         this.fromEmail = fromEmail;
         this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(REQUEST_TIMEOUT)
+                .connectTimeout(TIMEOUT_REQUETE)
                 .build();
         this.objectMapper = new ObjectMapper();
     }
 
-    public void sendVerificationEmail(String toEmail, String code) {
-        validateInputs(toEmail, code);
-        validateConfiguration();
+    public void envoyerEmailVerification(String emailDestinataire, String code) {
+        validerEntrees(emailDestinataire, code);
+        validerConfiguration();
 
-        String textContent = buildTextContent(code);
-        String htmlContent = buildHtmlContent(code);
-        BrevoEmailRequest request = buildEmailRequest(toEmail, textContent, htmlContent);
+        String contenuTexte = construireContenuTexte(code);
+        String contenuHtml = construireContenuHtml(code);
+        BrevoEmailRequest requete = construireRequeteEmail(emailDestinataire, contenuTexte, contenuHtml);
 
-        sendEmail(request);
-        log.info("Email de vérification envoyé à {} via Brevo", toEmail);
+        envoyerEmail(requete);
+        log.info("Email de vérification envoyé à {} via Brevo", emailDestinataire);
     }
 
-    private void validateInputs(String toEmail, String code) {
-        if (toEmail == null || toEmail.trim().isEmpty()) {
+    private void validerEntrees(String emailDestinataire, String code) {
+        if (emailDestinataire == null || emailDestinataire.trim().isEmpty()) {
             throw new IllegalArgumentException("Email destinataire requis");
         }
         if (code == null || code.trim().isEmpty()) {
@@ -60,60 +60,64 @@ public class MailService {
         }
     }
 
-    private void validateConfiguration() {
+    private void validerConfiguration() {
         if (brevoApiKey == null || brevoApiKey.isEmpty()) {
             log.error("BREVO_API_KEY n'est pas configurée");
             throw new RuntimeException("Configuration email manquante");
         }
     }
 
-    private String buildTextContent(String code) {
+    private String construireContenuTexte(String code) {
         return String.format(
                 "Bonjour,%n%n" +
-                "Voici votre code de vérification: %s%n" +
-                "Ce code expire dans 15 minutes.%n%n" +
-                "Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.%n%n" +
-                "Cordialement,", code);
+                        "Voici votre code de vérification: %s%n" +
+                        "Ce code expire dans 15 minutes.%n%n" +
+                        "Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.%n%n" +
+                        "Cordialement,",
+                code);
     }
 
-    private String buildHtmlContent(String code) {
+    private String construireContenuHtml(String code) {
         return String.format(
                 "<div style='font-family: Arial, sans-serif;'>" +
-                "<h2>Vérification de votre compte</h2>" +
-                "<p>Bonjour,</p>" +
-                "<p>Voici votre code de vérification: <strong style='font-size: 18px; color: #007bff;'>%s</strong></p>" +
-                "<p>Ce code expire dans 15 minutes.</p>" +
-                "<p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.</p>" +
-                "<p>Cordialement,<br>L'équipe Tanaye</p>" +
-                "</div>", code);
+                        "<h2>Vérification de votre compte</h2>" +
+                        "<p>Bonjour,</p>" +
+                        "<p>Voici votre code de vérification: <strong style='font-size: 18px; color: #007bff;'>%s</strong></p>"
+                        +
+                        "<p>Ce code expire dans 15 minutes.</p>" +
+                        "<p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.</p>" +
+                        "<p>Cordialement,<br>L'équipe Tanaye</p>" +
+                        "</div>",
+                code);
     }
 
-    private BrevoEmailRequest buildEmailRequest(String toEmail, String textContent, String htmlContent) {
+    private BrevoEmailRequest construireRequeteEmail(String emailDestinataire, String contenuTexte,
+            String contenuHtml) {
         return BrevoEmailRequest.builder()
                 .sender(new BrevoSender("Tanaye", fromEmail))
-                .to(List.of(new BrevoRecipient(toEmail)))
+                .to(List.of(new BrevoRecipient(emailDestinataire)))
                 .subject("Vérification de votre compte")
-                .textContent(textContent)
-                .htmlContent(htmlContent)
+                .textContent(contenuTexte)
+                .htmlContent(contenuHtml)
                 .build();
     }
 
-    private void sendEmail(BrevoEmailRequest request) {
+    private void envoyerEmail(BrevoEmailRequest requete) {
         try {
-            String jsonBody = objectMapper.writeValueAsString(request);
+            String corpsJson = objectMapper.writeValueAsString(requete);
             HttpRequest httpRequest = HttpRequest.newBuilder()
                     .uri(URI.create(BREVO_API_URL))
                     .header("api-key", brevoApiKey)
                     .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
-                    .timeout(REQUEST_TIMEOUT)
+                    .POST(HttpRequest.BodyPublishers.ofString(corpsJson))
+                    .timeout(TIMEOUT_REQUETE)
                     .build();
 
-            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> reponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                log.error("Erreur Brevo API - Status: {}, Body: {}", response.statusCode(), response.body());
-                throw new RuntimeException("Erreur lors de l'envoi de l'email: " + response.statusCode());
+            if (reponse.statusCode() < 200 || reponse.statusCode() >= 300) {
+                log.error("Erreur Brevo API - Status: {}, Body: {}", reponse.statusCode(), reponse.body());
+                throw new RuntimeException("Erreur lors de l'envoi de l'email: " + reponse.statusCode());
             }
         } catch (Exception e) {
             log.error("Echec envoi d'email via Brevo: {}", e.getMessage(), e);

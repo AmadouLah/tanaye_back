@@ -110,7 +110,7 @@ public class AuthService {
         String infoMessage = "Compte créé. Code de vérification envoyé par email.";
         // Envoyer l'email de vérification via Brevo
         try {
-            mailService.sendVerificationEmail(savedUtilisateur.getEmail(), code);
+            mailService.envoyerEmailVerification(savedUtilisateur.getEmail(), code);
             log.info("Email de vérification envoyé à {}", savedUtilisateur.getEmail());
         } catch (Exception e) {
             emailSent = false;
@@ -162,7 +162,7 @@ public class AuthService {
 
         // Renvoi via Brevo
         try {
-            mailService.sendVerificationEmail(utilisateur.getEmail(), code);
+            mailService.envoyerEmailVerification(utilisateur.getEmail(), code);
             log.info("Email de vérification renvoyé à {}", utilisateur.getEmail());
         } catch (Exception e) {
             log.error("Echec envoi email pour {}: {}", utilisateur.getEmail(), e.getMessage());
