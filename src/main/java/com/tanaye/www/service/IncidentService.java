@@ -85,12 +85,12 @@ public class IncidentService {
                 .append(i.getColis() != null ? i.getColis().getId() : "").append(';')
                 .append(i.getType()).append(';')
                 .append(i.getStatut()).append(';')
-                .append(escape(i.getDescription()))
+                .append(echapper(i.getDescription()))
                 .append('\n'));
         return sb.toString();
     }
 
-    private String escape(String v) {
+    private String echapper(String v) {
         if (v == null)
             return "";
         String s = v.replace("\n", " ").replace("\r", " ");

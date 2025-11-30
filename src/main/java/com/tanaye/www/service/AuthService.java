@@ -34,7 +34,7 @@ public class AuthService {
     // Suppression des constantes inutilisées
 
     @Transactional
-    public AuthResponse authenticate(LoginRequest request) {
+    public AuthResponse authentifier(LoginRequest request) {
         log.info("Tentative de connexion pour l'identifiant: {}", request.getIdentifiant());
 
         // Trouver l'utilisateur par email ou téléphone
@@ -61,7 +61,7 @@ public class AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Générer le token JWT
-        String token = jwtService.generateToken(new CustomUserDetails(utilisateur));
+        String token = jwtService.genererToken(new CustomUserDetails(utilisateur));
 
         // Mettre à jour la dernière connexion
         utilisateur.setDateModification(LocalDateTime.now());
@@ -72,7 +72,7 @@ public class AuthService {
     }
 
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public AuthResponse inscrire(RegisterRequest request) {
         log.info("Tentative d'inscription pour l'email: {}", request.getEmail());
 
         // Vérifier que l'email n'existe pas déjà
@@ -190,19 +190,19 @@ public class AuthService {
 
         String lower = pwd.toLowerCase();
         // éviter email, nom, prénom, téléphone inclus dans le mot de passe
-        if (containsNonTrivial(lower, safe(request.getEmail()))
-                || containsNonTrivial(lower, safe(request.getNom()))
-                || containsNonTrivial(lower, safe(request.getPrenom()))
-                || containsNonTrivial(lower, safe(request.getTelephone()))) {
+        if (contientNonTrivial(lower, nettoyer(request.getEmail()))
+                || contientNonTrivial(lower, nettoyer(request.getNom()))
+                || contientNonTrivial(lower, nettoyer(request.getPrenom()))
+                || contientNonTrivial(lower, nettoyer(request.getTelephone()))) {
             throw new IllegalArgumentException("Le mot de passe ne doit pas contenir vos informations personnelles");
         }
     }
 
-    private String safe(String s) {
+    private String nettoyer(String s) {
         return s == null ? "" : s.trim().toLowerCase();
     }
 
-    private boolean containsNonTrivial(String haystack, String needle) {
+    private boolean contientNonTrivial(String haystack, String needle) {
         if (needle.isBlank())
             return false;
         // ignorer symboles communs dans téléphone/mail

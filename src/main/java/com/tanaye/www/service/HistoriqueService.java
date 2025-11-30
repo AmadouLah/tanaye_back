@@ -56,13 +56,13 @@ public class HistoriqueService {
                 .append(h.getId()).append(';')
                 .append(h.getDateCreation()).append(';')
                 .append(h.getUtilisateur() != null ? h.getUtilisateur().getId() : "").append(';')
-                .append(escape(h.getAction())).append(';')
-                .append(escape(h.getDetails() != null ? h.getDetails() : ""))
+                .append(echapper(h.getAction())).append(';')
+                .append(echapper(h.getDetails() != null ? h.getDetails() : ""))
                 .append('\n'));
         return sb.toString();
     }
 
-    private String escape(String v) {
+    private String echapper(String v) {
         if (v == null)
             return "";
         String s = v.replace("\n", " ").replace("\r", " ");
